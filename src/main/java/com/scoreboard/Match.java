@@ -11,4 +11,7 @@ public record Match(
         int awayScore,
         long sequence
 ) {
+    public int totalScore() {
+        return homeScore + awayScore;
+    }
 }
