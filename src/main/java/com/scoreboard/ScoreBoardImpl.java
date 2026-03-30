@@ -1,5 +1,6 @@
 package com.scoreboard;
 
+import com.scoreboard.exception.MatchNotFoundException;
 import com.scoreboard.exception.SameTeamOnBothSidesException;
 import com.scoreboard.exception.TeamAlreadyAtPlayException;
 import com.scoreboard.exception.TeamNameInvalidException;
@@ -9,7 +10,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ScoreBoardImpl implements ScoreBoard {
-    private record MatchKey(String homeTeam, String awayTeam) {}
+    private record MatchKey(String homeTeam, String awayTeam) {
+    }
 
     private final Map<MatchKey, Match> matches = new HashMap<>();
     private long sequence = 0L;
@@ -37,6 +39,11 @@ public class ScoreBoardImpl implements ScoreBoard {
 
     @Override
     public void finishGame(String homeTeam, String awayTeam) {
+        Match removed = matches.remove(new MatchKey(homeTeam, awayTeam));
+
+        if (removed == null) {
+            throw new MatchNotFoundException(homeTeam, awayTeam);
+        }
 
     }
 
