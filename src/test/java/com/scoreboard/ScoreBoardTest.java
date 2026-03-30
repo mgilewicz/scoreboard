@@ -97,11 +97,11 @@ public class ScoreBoardTest {
         Match updatedMatch = board.updateScore("Mexico", "Canada", 5, 3);
 
         assertThat(updatedMatch.homeScore()).isEqualTo(5);
-        assertThat(updatedMatch.awayScore()).isEqualTo(10);
+        assertThat(updatedMatch.awayScore()).isEqualTo(3);
         assertThat(board.getSummary())
                 .hasSize(1)
                 .extracting(Match::homeTeam, Match::awayTeam, Match::homeScore, Match::awayScore)
-                .containsExactly(tuple("Mexico", "Canada", 5, 10));
+                .containsExactly(tuple("Mexico", "Canada", 5, 3));
     }
 
     @Test

@@ -1,9 +1,6 @@
 package com.scoreboard;
 
-import com.scoreboard.exception.MatchNotFoundException;
-import com.scoreboard.exception.SameTeamOnBothSidesException;
-import com.scoreboard.exception.TeamAlreadyAtPlayException;
-import com.scoreboard.exception.TeamNameInvalidException;
+import com.scoreboard.exception.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,15 +38,20 @@ public class ScoreBoardImpl implements ScoreBoard {
     public void finishGame(String homeTeam, String awayTeam) {
         Match removed = matches.remove(new MatchKey(homeTeam, awayTeam));
 
-        if (removed == null) {
-            throw new MatchNotFoundException(homeTeam, awayTeam);
-        }
-
+        if (removed == null) throw new MatchNotFoundException(homeTeam, awayTeam);
     }
 
     @Override
     public Match updateScore(String homeTeam, String awayTeam, int homeScore, int awayScore) {
-        return null;
+        if(homeScore < 0) throw new NegativeScoreException(homeScore);
+        if(awayScore < 0) throw new NegativeScoreException(awayScore);
+        MatchKey matchKey = new MatchKey(homeTeam, awayTeam);
+        Match match = matches.get(matchKey);
+        if (match == null) throw new MatchNotFoundException(homeTeam, awayTeam);
+        Match updatedMatch = new Match(match.homeTeam(), match.awayTeam(), homeScore, awayScore, match.sequence());
+        matches.put(matchKey, updatedMatch);
+
+        return updatedMatch;
     }
 
     @Override
