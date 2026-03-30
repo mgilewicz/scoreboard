@@ -4,6 +4,11 @@ import com.scoreboard.exception.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import static org.assertj.core.api.Assertions.*;
 
 
@@ -148,5 +153,39 @@ public class ScoreBoardTest {
                         tuple("Argentina", "Australia", 3, 1),
                         tuple("Germany", "France", 2, 2)
                 );
+    }
+
+    @Test
+    void concurrency_shouldStartOnlyOneMatchWhenConcurrentReporters() throws InterruptedException {
+        int nReporters = 10; // 10 reporters at the same match
+        try (ExecutorService executorService = Executors.newFixedThreadPool(nReporters)) {
+            CountDownLatch countDownLatch = new CountDownLatch(1); // to fire all threads at the same moment
+            for (int i = 0; i < nReporters; i++) {
+                final int matchNumber = i;
+                executorService.submit(() -> {
+                    try {
+                        countDownLatch.await();
+                        String homeTeam = "" + matchNumber;
+                        String awayTeam = "" + 100 + matchNumber;
+                        board.startGame(homeTeam, awayTeam);
+                        board.finishGame(homeTeam, awayTeam);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
+
+            countDownLatch.countDown(); // all threads start now
+            executorService.shutdown();
+            assertThat(executorService.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
+        }
+        assertThat(board.getSummary()).hasSize(0);
+
+        // verify sequence has been increased by reporters
+        board.startGame("Mexico", "Canada");
+        assertThat(board.getSummary())
+                .hasSize(1)
+                .extracting(Match::sequence)
+                .containsExactly(10L);
     }
 }
